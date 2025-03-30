@@ -89,6 +89,7 @@ export default class PatientsRepository {
       .select({
         id: patientsTable.id,
         patient_id: patientsTable.patient_id,
+        name: patientsTable.name,
         treatment_date: patientsTable.treatment_date,
         cost_of_treatment: patientsTable.cost_of_treatment,
         treatment_description: sql<
@@ -182,6 +183,7 @@ export default class PatientsRepository {
       .select({
         id: patientsTable.id,
         patient_id: patientsTable.patient_id,
+        name: patientsTable.name,
         treatment_date: patientsTable.treatment_date,
         cost_of_treatment: patientsTable.cost_of_treatment,
         treatment_description: sql<

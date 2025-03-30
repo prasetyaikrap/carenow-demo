@@ -152,3 +152,15 @@ export function generateQueries({
     orderQueries: finalOrderSql,
   };
 }
+
+export function generateFilters(
+  queries: {
+    [key: string]: string;
+  } | null
+): QueryFilter[] {
+  if (!queries) return [];
+  return Object.keys(queries).map((field) => ({
+    field,
+    value: queries[field],
+  }));
+}

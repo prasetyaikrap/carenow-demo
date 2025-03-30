@@ -1,0 +1,44 @@
+import { generateFilters } from "@/src/commons/utils/general";
+import QueryPagination, {
+  QueryPaginationPayload,
+} from "@/src/infrastructure/repository/general/entities/QueryPagination";
+import PatientsRepository from "@/src/infrastructure/repository/patients/PatientsRepository";
+import { BaseUseCasePayload } from "@/types";
+
+export type GetPatientListUseCasePayload = {
+  queryParams: QueryPaginationPayload;
+} & BaseUseCasePayload;
+
+type GetPatientListUseCaseProps = {
+  patientsRepository: PatientsRepository;
+};
+
+export default class GetPatientListUseCase {
+  public name: string;
+  public _patientsRepository: GetPatientListUseCaseProps["patientsRepository"];
+
+  constructor({ patientsRepository }: GetPatientListUseCaseProps) {
+    this.name = "Get Patient List UseCase";
+    this._patientsRepository = patientsRepository;
+  }
+
+  async execute({ queryParams }: GetPatientListUseCasePayload) {
+    const { queries, _page, _limit, _sort } = new QueryPagination({
+      payload: queryParams,
+      keys: ["name:name__contains"],
+    });
+
+    const orders = _sort.split(",");
+
+    const filters = generateFilters(queries);
+
+    const result = await this._patientsRepository.getPatientList({
+      filters,
+      orders,
+      page: _page,
+      limit: _limit,
+    });
+
+    return result;
+  }
+}
