@@ -1,17 +1,19 @@
 import {
+  Box,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   InputAdornment,
+  LinearProgress,
   Slide,
   Stack,
 } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { PatientFormFieldValue } from "../type";
+import { PatientData, PatientFormFieldValue } from "../type";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   medicationPrescribedOptions,
@@ -24,18 +26,28 @@ import {
   FormInputDate,
   FormNumberInput,
 } from "../../../components";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  BaseResponse,
+  createPatientRecord,
+  getPatientbyId,
+  updatePatientRecord,
+} from "../../../libs";
 
-type CreatePatientFormDialogProps = {
+type PatientFormDialogProps = {
   open: boolean;
   onClose: () => void;
-  editMode?: boolean;
+  editId: string | null;
 };
 
-export default function CreatePatientFormDialog({
+export default function PatientFormDialog({
   open,
-  editMode = false,
+  editId,
   onClose,
-}: CreatePatientFormDialogProps) {
+}: PatientFormDialogProps) {
+  const editMode = Boolean(editId);
+  const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [defaultValues, setDefaultValues] = useState<PatientFormFieldValue>({
     id: "",
     name: "",
@@ -43,6 +55,23 @@ export default function CreatePatientFormDialog({
     treatment_description: [],
     medication_prescribed: [],
     cost_of_treatment: 0,
+  });
+
+  const { data, isLoading, isFetching } = useQuery<BaseResponse<PatientData>>({
+    queryKey: ["patients"],
+    queryFn: () =>
+      getPatientbyId({
+        id: editId || "",
+      }),
+    enabled: Boolean(editId),
+  });
+  const patientData = data?.data;
+
+  const { mutate: createPatient } = useMutation({
+    mutationFn: createPatientRecord,
+  });
+  const { mutate: updatePatient } = useMutation({
+    mutationFn: updatePatientRecord,
   });
 
   const {
@@ -57,17 +86,66 @@ export default function CreatePatientFormDialog({
     mode: "onChange",
   });
 
-  const submitBtnLabel = editMode ? "Edit" : "Create";
+  const submitBtnLabel = editId ? "Edit" : "Create";
 
   const handleCancel = () => {
     onClose();
   };
 
   const onSubmit = (data: PatientFormFieldValue) => {
-    console.log(data);
+    setIsSubmitting(true);
+    if (editMode) {
+      updatePatient(
+        {
+          id: data.id,
+          body: {
+            name: data.name,
+            treatment_date: data.treatment_date,
+            treatment_description: data.treatment_description,
+            medication_prescribed: data.medication_prescribed,
+            cost_of_treatment: data.cost_of_treatment,
+          },
+        },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["patients"] });
+            setIsSubmitting(false);
+            onClose();
+          },
+        }
+      );
+    } else {
+      createPatient(
+        {
+          body: {
+            id: data.id,
+            name: data.name,
+            treatment_date: data.treatment_date,
+            treatment_description: data.treatment_description,
+            medication_prescribed: data.medication_prescribed,
+            cost_of_treatment: data.cost_of_treatment,
+          },
+        },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["patients"] });
+            setIsSubmitting(false);
+            onClose();
+          },
+        }
+      );
+    }
   };
 
-  useEffect(() => {}, [editMode]);
+  useEffect(() => {
+    if (editMode && patientData) {
+      setDefaultValues({
+        ...patientData,
+      });
+    }
+  }, [editMode, patientData]);
+
+  const isEditLoading = editMode && (isLoading || isFetching);
 
   return (
     <Dialog
@@ -83,6 +161,21 @@ export default function CreatePatientFormDialog({
         },
       }}
       fullWidth>
+      {isEditLoading && (
+        <>
+          <LinearProgress />
+          <Box
+            bgcolor="black"
+            zIndex="10"
+            position="absolute"
+            width="100%"
+            height="100%"
+            sx={{
+              opacity: ".2",
+            }}
+          />
+        </>
+      )}
       <DialogTitle>Create Patient Record</DialogTitle>
       <DialogContent>
         <Stack paddingY="16px" spacing="16px">
@@ -134,8 +227,14 @@ export default function CreatePatientFormDialog({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleCancel}>Cancel</Button>
-        <Button type="submit" variant="contained" disabled={!isValid}>
+        <Button onClick={handleCancel} loading={isSubmitting}>
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={!isValid}
+          loading={isSubmitting}>
           {submitBtnLabel}
         </Button>
       </DialogActions>

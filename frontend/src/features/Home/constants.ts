@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PatientData } from "./type";
 
 export const patientFormSchema = z.object({
   id: z.string().min(1),
@@ -34,5 +35,52 @@ export const medicationPrescribedOptions = [
   {
     label: "Paracetamol 100gr",
     value: "MED001",
+  },
+];
+
+export const mockRows: PatientData[] = [
+  {
+    id: "1",
+    name: "Snow",
+    treatment_date: new Date().toISOString(),
+    treatment_description: [
+      { label: "Pemeriksaan Normal", value: "TD001" },
+      { label: "Test Darah", value: "TD002" },
+    ],
+    medication_prescribed: [{ label: "Paracetamol 100gr", value: "MED001" }],
+    cost_of_treatment: 100000,
+  },
+  {
+    id: "2",
+    name: "Lannister",
+    treatment_date: new Date().toISOString(),
+    treatment_description: [
+      { label: "Pemeriksaan Normal", value: "TD001" },
+      { label: "Test Darah", value: "TD002" },
+    ],
+    medication_prescribed: [{ label: "Paracetamol 100gr", value: "MED001" }],
+    cost_of_treatment: 250000,
+  },
+  {
+    id: "3",
+    name: "Lannister",
+    treatment_date: new Date().toISOString(),
+    treatment_description: [
+      { label: "Pemeriksaan Normal", value: "TD001" },
+      { label: "Test Darah", value: "TD002" },
+    ],
+    medication_prescribed: [{ label: "Paracetamol 100gr", value: "MED001" }],
+    cost_of_treatment: 350000,
+  },
+  {
+    id: "4",
+    name: "Stark",
+    treatment_date: new Date().toISOString(),
+    treatment_description: [
+      { label: "Pemeriksaan Normal", value: "TD001" },
+      { label: "Test Darah", value: "TD002" },
+    ],
+    medication_prescribed: [{ label: "Paracetamol 100gr", value: "MED001" }],
+    cost_of_treatment: 1200000,
   },
 ];

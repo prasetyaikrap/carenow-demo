@@ -1,119 +1,129 @@
 import { Box, Button, Chip, Container, Stack, Typography } from "@mui/material";
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import Paper from "@mui/material/Paper";
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import CreatePatientFormDialog from "./components/CreatePatientFormDialog";
 import { PatientData } from "./type";
 import { formatDate } from "../../utils/general";
+import { useQuery } from "@tanstack/react-query";
+import { BaseResponse, getPatientList } from "../../libs";
 
 export default function Home() {
   const [formOpen, setFormOpen] = useState(false);
-  const columns: GridColDef<PatientData>[] = [
-    {
-      field: "id",
-      headerName: "ID",
-      headerAlign: "center",
-      width: 70,
-      align: "center",
-    },
-    {
-      field: "name",
-      headerName: "Patient Name",
-      headerAlign: "center",
-      flex: 1,
-      maxWidth: 200,
-    },
-    {
-      field: "treatment_date",
-      headerName: "Treatment Date",
-      headerAlign: "center",
-      flex: 1,
-      align: "center",
-      maxWidth: 300,
-      renderCell: DateRender,
-    },
-    {
-      field: "treatment_description",
-      headerName: "Treatment Description",
-      headerAlign: "center",
-      flex: 1,
-      maxWidth: 400,
-      renderCell: TreatmentDescRender,
-    },
-    {
-      field: "medication_prescribed",
-      headerName: "Medication Prescribed",
-      headerAlign: "center",
-      flex: 1,
-      maxWidth: 400,
-      renderCell: MedicationPrescribedRender,
-    },
-    {
-      field: "cost_of_treatment",
-      headerName: "Cost of Treatment (Rp)",
-      headerAlign: "center",
-      type: "number",
-      flex: 1,
-      maxWidth: 170,
-    },
-  ];
+  const [editId, setEditId] = useState<string | null>(null);
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 5,
+  });
 
-  const rows: PatientData[] = [
+  const { data, isLoading, isFetching } = useQuery<BaseResponse<PatientData[]>>(
     {
-      id: "1",
-      name: "Snow",
-      treatment_date: new Date().toISOString(),
-      treatment_description: [
-        { label: "Pemeriksaan Normal", value: "TD001" },
-        { label: "Test Darah", value: "TD002" },
-      ],
-      medication_prescribed: [{ label: "Paracetamol 100gr", value: "MED001" }],
-      cost_of_treatment: 100000,
-    },
-    {
-      id: "2",
-      name: "Lannister",
-      treatment_date: new Date().toISOString(),
-      treatment_description: [
-        { label: "Pemeriksaan Normal", value: "TD001" },
-        { label: "Test Darah", value: "TD002" },
-      ],
-      medication_prescribed: [{ label: "Paracetamol 100gr", value: "MED001" }],
-      cost_of_treatment: 250000,
-    },
-    {
-      id: "3",
-      name: "Lannister",
-      treatment_date: new Date().toISOString(),
-      treatment_description: [
-        { label: "Pemeriksaan Normal", value: "TD001" },
-        { label: "Test Darah", value: "TD002" },
-      ],
-      medication_prescribed: [{ label: "Paracetamol 100gr", value: "MED001" }],
-      cost_of_treatment: 350000,
-    },
-    {
-      id: "4",
-      name: "Stark",
-      treatment_date: new Date().toISOString(),
-      treatment_description: [
-        { label: "Pemeriksaan Normal", value: "TD001" },
-        { label: "Test Darah", value: "TD002" },
-      ],
-      medication_prescribed: [{ label: "Paracetamol 100gr", value: "MED001" }],
-      cost_of_treatment: 1200000,
-    },
-  ];
+      queryKey: ["patients"],
+      queryFn: () =>
+        getPatientList({
+          _limit: paginationModel.pageSize,
+          _page: paginationModel.page + 1,
+        }),
+    }
+  );
 
-  const paginationModel = { page: 0, pageSize: 5 };
+  const ActionRender = useCallback(
+    ({ row }: GridRenderCellParams<PatientData>) => {
+      const onEdit = () => {
+        setEditId(row.id);
+      };
+
+      return (
+        <Stack
+          direction="row"
+          spacing="4px"
+          height="100%"
+          paddingY="8px"
+          justifyContent="center"
+          alignItems="center">
+          <Button size="small" variant="outlined" onClick={onEdit}>
+            Edit
+          </Button>
+        </Stack>
+      );
+    },
+    [setEditId]
+  );
+
+  const columns: GridColDef<PatientData>[] = useMemo(
+    () => [
+      {
+        field: "id",
+        headerName: "ID",
+        headerAlign: "center",
+        width: 70,
+        align: "center",
+      },
+      {
+        field: "name",
+        headerName: "Patient Name",
+        headerAlign: "center",
+        flex: 1,
+        maxWidth: 200,
+      },
+      {
+        field: "treatment_date",
+        headerName: "Treatment Date",
+        headerAlign: "center",
+        flex: 1,
+        align: "center",
+        maxWidth: 300,
+        renderCell: DateRender,
+      },
+      {
+        field: "treatment_description",
+        headerName: "Treatment Description",
+        headerAlign: "center",
+        flex: 1,
+        maxWidth: 400,
+        renderCell: TreatmentDescRender,
+      },
+      {
+        field: "medication_prescribed",
+        headerName: "Medication Prescribed",
+        headerAlign: "center",
+        flex: 1,
+        maxWidth: 400,
+        renderCell: MedicationPrescribedRender,
+      },
+      {
+        field: "cost_of_treatment",
+        headerName: "Cost of Treatment (Rp)",
+        headerAlign: "center",
+        type: "number",
+        flex: 1,
+        maxWidth: 170,
+      },
+      {
+        field: "action",
+        headerName: "Action",
+        headerAlign: "center",
+        flex: 1,
+        maxWidth: 100,
+        renderCell: ActionRender,
+      },
+    ],
+    [ActionRender]
+  );
 
   const onFormClose = () => {
     setFormOpen(false);
+    setEditId(null);
   };
 
   const onFormOpen = () => {
     setFormOpen(true);
   };
+
+  useEffect(() => {
+    if (!editId) return;
+    setFormOpen(true);
+  }, [editId]);
 
   return (
     <Container>
@@ -130,17 +140,27 @@ export default function Home() {
           </Stack>
           <Paper sx={{ width: "100%" }}>
             <DataGrid
-              rows={rows}
+              rows={data?.data || []}
               columns={columns}
-              initialState={{ pagination: { paginationModel } }}
-              pageSizeOptions={[5, 10]}
+              disableColumnSorting
+              disableColumnFilter
+              paginationModel={paginationModel}
+              onPaginationModelChange={setPaginationModel}
+              pageSizeOptions={[2, 5, 10]}
               rowHeight={100}
-              sx={{ border: 0 }}
+              paginationMode="server"
+              rowCount={data?.metadata?.total_page || 0}
+              loading={isLoading || isFetching}
+              rowSelection={false}
             />
           </Paper>
         </Stack>
       </Stack>
-      <CreatePatientFormDialog open={formOpen} onClose={onFormClose} />
+      <CreatePatientFormDialog
+        open={formOpen}
+        onClose={onFormClose}
+        editId={editId}
+      />
     </Container>
   );
 }
