@@ -17,6 +17,8 @@ import MedicationsRepository from "../repository/medications/MedicationsReposito
 import GetMedicationListUseCase from "@/src/applications/usecases/medications/GetMedicationListUseCase";
 import medicationsRoutes from "@/src/interfaces/http/api/medications/routes";
 import MedicationsHandler from "@/src/interfaces/http/api/medications/handler";
+import CreatePatientUseCase from "@/src/applications/usecases/patients/CreatePatientUseCase";
+import UpdatePatientByIdUseCase from "@/src/applications/usecases/patients/UpdatePatientByIdUseCase";
 
 export default function createApp() {
   // database
@@ -34,6 +36,10 @@ export default function createApp() {
   const patientsUseCase = {
     getPatientListUseCase: new GetPatientListUseCase({ patientsRepository }),
     getPatientByIdUseCase: new GetPatientByIdUseCase({ patientsRepository }),
+    createPatientUseCase: new CreatePatientUseCase({ patientsRepository }),
+    updatePatientByIdUseCase: new UpdatePatientByIdUseCase({
+      patientsRepository,
+    }),
   };
   const treatmentsUseCase = {
     getTreatmentListUseCase: new GetTreatmentListUseCase({

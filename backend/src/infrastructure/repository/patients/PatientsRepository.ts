@@ -349,6 +349,7 @@ export default class PatientsRepository {
           cost_of_treatment: payload.cost_of_treatment,
           updated_at: now,
         })
+        .where(eq(patientsTable.id, id))
         .returning({ id: patientsTable.id });
 
       if (!patientResult[0]?.id) {

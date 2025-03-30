@@ -10,6 +10,8 @@ export default function patientsRoutes({
 
   routes.get("/", controller.getPatientList);
   routes.get("/:id", controller.getPatientById);
+  routes.post("/", controller.createPatient);
+  routes.put("/:id", controller.updatePatient);
 
   return routes;
 }

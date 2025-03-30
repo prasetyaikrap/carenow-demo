@@ -32,13 +32,28 @@ export default class GetPatientListUseCase {
 
     const filters = generateFilters(queries);
 
-    const result = await this._patientsRepository.getPatientList({
+    const { data, metadata } = await this._patientsRepository.getPatientList({
       filters,
       orders,
       page: _page,
       limit: _limit,
     });
 
-    return result;
+    return {
+      data: data.map((d) => ({
+        ...d,
+        treatment_description: d.treatment_description.filter(
+          (td, index, self) =>
+            td.value !== null &&
+            index === self.findIndex((t) => t.value === td.value)
+        ),
+        medication_prescribed: d.medication_prescribed.filter(
+          (mp, index, self) =>
+            mp.value !== null &&
+            index === self.findIndex((t) => t.value === mp.value)
+        ),
+      })),
+      metadata,
+    };
   }
 }
