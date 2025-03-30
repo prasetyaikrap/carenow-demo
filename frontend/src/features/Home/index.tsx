@@ -53,10 +53,10 @@ export default function Home() {
   const columns: GridColDef<PatientData>[] = useMemo(
     () => [
       {
-        field: "id",
+        field: "patient_id",
         headerName: "ID",
         headerAlign: "center",
-        width: 70,
+        width: 100,
         align: "center",
       },
       {

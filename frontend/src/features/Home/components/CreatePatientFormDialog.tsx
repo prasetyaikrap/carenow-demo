@@ -13,13 +13,14 @@ import {
 import { TransitionProps } from "@mui/material/transitions";
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { PatientData, PatientFormFieldValue } from "../type";
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  medicationPrescribedOptions,
-  patientFormSchema,
-  treatmentDescriptionOptions,
-} from "../constants";
+  MedicationData,
+  PatientData,
+  PatientFormFieldValue,
+  TreatmentData,
+} from "../type";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { patientFormSchema } from "../constants";
 import {
   FormAutoCompleteMultiInput,
   FormInput,
@@ -30,7 +31,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BaseResponse,
   createPatientRecord,
+  getMedicationList,
   getPatientbyId,
+  getTreatmentList,
   updatePatientRecord,
 } from "../../../libs";
 
@@ -45,27 +48,43 @@ export default function PatientFormDialog({
   editId,
   onClose,
 }: PatientFormDialogProps) {
-  const editMode = Boolean(editId);
-  const queryClient = useQueryClient();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [defaultValues, setDefaultValues] = useState<PatientFormFieldValue>({
+  const defaultFormValues: PatientFormFieldValue = {
     id: "",
     name: "",
     treatment_date: new Date().toISOString(),
     treatment_description: [],
     medication_prescribed: [],
     cost_of_treatment: 0,
-  });
+  };
+  const editMode = Boolean(editId);
+  const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [defaultValues, setDefaultValues] =
+    useState<PatientFormFieldValue>(defaultFormValues);
 
   const { data, isLoading, isFetching } = useQuery<BaseResponse<PatientData>>({
-    queryKey: ["patients"],
+    queryKey: ["patientDetail", editId],
     queryFn: () =>
       getPatientbyId({
         id: editId || "",
       }),
-    enabled: Boolean(editId),
+    enabled: editMode,
   });
   const patientData = data?.data;
+
+  const { data: treatments } = useQuery<BaseResponse<TreatmentData[]>>({
+    queryKey: ["treatments", editId],
+    queryFn: () => getTreatmentList({ _limit: 100, _page: 1 }),
+  });
+  const treatmentsOptions =
+    treatments?.data.map((d) => ({ value: d.id, label: d.label })) || [];
+
+  const { data: medications } = useQuery<BaseResponse<MedicationData[]>>({
+    queryKey: ["medications", editId],
+    queryFn: () => getMedicationList({ _limit: 100, _page: 1 }),
+  });
+  const medicationsOptions =
+    medications?.data.map((d) => ({ value: d.id, label: d.label })) || [];
 
   const { mutate: createPatient } = useMutation({
     mutationFn: createPatientRecord,
@@ -97,8 +116,9 @@ export default function PatientFormDialog({
     if (editMode) {
       updatePatient(
         {
-          id: data.id,
+          id: editId || "",
           body: {
+            id: data.id,
             name: data.name,
             treatment_date: data.treatment_date,
             treatment_description: data.treatment_description,
@@ -138,9 +158,14 @@ export default function PatientFormDialog({
   };
 
   useEffect(() => {
+    if (!editMode) {
+      return setDefaultValues(defaultFormValues);
+    }
+
     if (editMode && patientData) {
       setDefaultValues({
         ...patientData,
+        id: patientData.patient_id,
       });
     }
   }, [editMode, patientData]);
@@ -204,14 +229,14 @@ export default function PatientFormDialog({
           <FormAutoCompleteMultiInput
             name="treatment_description"
             label="Treatment Description"
-            options={treatmentDescriptionOptions}
+            options={treatmentsOptions}
             control={control}
             required
           />
           <FormAutoCompleteMultiInput
             name="medication_prescribed"
             label="Medication Prescribed"
-            options={medicationPrescribedOptions}
+            options={medicationsOptions}
             control={control}
             required
           />

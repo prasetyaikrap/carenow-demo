@@ -18,7 +18,7 @@ export const getPatientList = async ({
   _page = 0,
   query,
 }: GetPatientListProps) => {
-  const response = await apiClient.get("/patients", {
+  const response = await apiClient.get("/v1/patients", {
     params: {
       _page,
       _limit,
@@ -34,7 +34,7 @@ type GetPatientByIdProps = {
 };
 
 export const getPatientbyId = async ({ id }: GetPatientByIdProps) => {
-  const response = await apiClient.get(`/patients/${id}`);
+  const response = await apiClient.get(`/v1/patients/${id}`);
 
   return response.data;
 };
@@ -59,13 +59,14 @@ type CreatePatientRecordProps = {
 export const createPatientRecord = async ({
   body,
 }: CreatePatientRecordProps) => {
-  const response = await apiClient.post(`/patients`, body);
+  const response = await apiClient.post(`/v1/patients`, body);
 
   return response.data;
 };
 type UpdatePatientRecordProps = {
   id: string;
   body: {
+    id: string;
     name: string;
     treatment_date: string;
     treatment_description: {
@@ -84,7 +85,7 @@ export const updatePatientRecord = async ({
   id,
   body,
 }: UpdatePatientRecordProps) => {
-  const response = await apiClient.put(`/patients/${id}`, body);
+  const response = await apiClient.put(`/v1/patients/${id}`, body);
 
   return response.data;
 };
