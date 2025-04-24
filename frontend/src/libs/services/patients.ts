@@ -5,24 +5,25 @@ const apiClient = axios.create({
   baseURL: ENV.SERVICE_URL,
 });
 
-type GetPatientListProps = {
+export type GetPatientListProps = {
   _limit?: number;
   _page?: number;
-  query?: {
+  queries?: {
     name?: string;
+    treatment?: string;
   };
 };
 
 export const getPatientList = async ({
   _limit = 5,
   _page = 0,
-  query,
+  queries,
 }: GetPatientListProps) => {
   const response = await apiClient.get("/v1/patients", {
     params: {
       _page,
       _limit,
-      query,
+      queries: JSON.stringify(queries),
     },
   });
 

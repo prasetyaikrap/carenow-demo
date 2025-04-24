@@ -225,6 +225,7 @@ export default function PatientFormDialog({
             onChange={(value) => {
               setValue("treatment_date", value?.toISOString() || "");
             }}
+            format="dd MMMM yyyy"
           />
           <FormAutoCompleteMultiInput
             name="treatment_description"

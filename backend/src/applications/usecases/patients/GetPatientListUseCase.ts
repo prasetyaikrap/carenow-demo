@@ -25,7 +25,10 @@ export default class GetPatientListUseCase {
   async execute({ queryParams }: GetPatientListUseCasePayload) {
     const { queries, _page, _limit, _sort } = new QueryPagination({
       payload: queryParams,
-      keys: ["name:name__contains"],
+      keys: [
+        "name:name__contains",
+        "treatment:treatments.label__havingArrayToStringContains",
+      ],
     });
 
     const orders = _sort.split(",");

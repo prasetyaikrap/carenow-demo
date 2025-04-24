@@ -1,8 +1,8 @@
 import InvariantError from "@/src/commons/exceptions/InvariantError";
 import { match, P } from "ts-pattern";
 
-export type QueryPaginationPayload<TQueryData = Record<string, any>> = {
-  queries: TQueryData | null;
+export type QueryPaginationPayload = {
+  queries: string | null;
   _page: string | null;
   _limit: string | null;
   _sort: string | null;
@@ -10,8 +10,8 @@ export type QueryPaginationPayload<TQueryData = Record<string, any>> = {
   _direction: string | null;
 };
 
-export type QueryPaginationProps<TQueryData> = {
-  payload: QueryPaginationPayload<TQueryData>;
+export type QueryPaginationProps = {
+  payload: QueryPaginationPayload;
   keys: string[];
   maxLimit?: number;
   defaultOrder?: string;
@@ -32,7 +32,7 @@ export default class QueryPagination<
     keys,
     maxLimit = 100,
     defaultOrder = "-created_at",
-  }: QueryPaginationProps<TQueryData>) {
+  }: QueryPaginationProps) {
     this._verifyPayload(payload, maxLimit);
     const { _page, _limit, _sort, _cursor, _direction, queries } = payload;
     this.queries = this._pickQueries(queries, keys);
@@ -43,10 +43,7 @@ export default class QueryPagination<
     this._direction = _direction || "next";
   }
 
-  _verifyPayload(
-    payload: QueryPaginationPayload<TQueryData>,
-    maxLimit: number
-  ) {
+  _verifyPayload(payload: QueryPaginationPayload, maxLimit: number) {
     match(payload)
       .with({ _page: P.nullish }, () => {
         throw new InvariantError("Query _page is required");
@@ -73,11 +70,10 @@ export default class QueryPagination<
       .otherwise(() => {});
   }
 
-  _pickQueries(
-    queries: QueryPaginationPayload<TQueryData>["queries"],
-    keys: string[]
-  ) {
-    if (!queries) return queries;
+  _pickQueries(queries: QueryPaginationPayload["queries"], keys: string[]) {
+    if (!queries) return null;
+
+    const queriesObj = JSON.parse(queries) as TQueryData;
 
     return keys.reduce((result, current) => {
       let queryKey = current;
@@ -89,11 +85,11 @@ export default class QueryPagination<
         columnKey = columnKeyFromConfig;
       }
 
-      if (!queries[queryKey]) return result;
+      if (!queriesObj[queryKey]) return result;
 
       return {
         ...result,
-        [columnKey]: queries[queryKey],
+        [columnKey]: queriesObj[queryKey],
       };
     }, {} as TQueryData);
   }

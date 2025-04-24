@@ -1,31 +1,42 @@
-import { Box, Button, Chip, Container, Stack, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Chip,
+  Container,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import Paper from "@mui/material/Paper";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import CreatePatientFormDialog from "./components/CreatePatientFormDialog";
-import { PatientData } from "./type";
 import { formatDate } from "../../utils/general";
 import { useQuery } from "@tanstack/react-query";
-import { BaseResponse, getPatientList } from "../../libs";
+import { BaseResponse, getPatientList, GetPatientListProps } from "../../libs";
+import { PatientData } from "./type";
 
 export default function Home() {
   const [formOpen, setFormOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const [filters, setFilters] =
+    useState<GetPatientListProps["queries"]>(undefined);
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
     pageSize: 5,
   });
 
-  const { data, isLoading, isFetching } = useQuery<BaseResponse<PatientData[]>>(
-    {
-      queryKey: ["patients"],
-      queryFn: () =>
-        getPatientList({
-          _limit: paginationModel.pageSize,
-          _page: paginationModel.page + 1,
-        }),
-    }
-  );
+  const { data, isLoading, isFetching, refetch } = useQuery<
+    BaseResponse<PatientData[]>
+  >({
+    queryKey: ["patients"],
+    queryFn: () =>
+      getPatientList({
+        _limit: paginationModel.pageSize,
+        _page: paginationModel.page + 1,
+        queries: filters,
+      }),
+  });
 
   const ActionRender = useCallback(
     ({ row }: GridRenderCellParams<PatientData>) => {
@@ -120,6 +131,11 @@ export default function Home() {
     setFormOpen(true);
   };
 
+  const onFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value, name } = e.currentTarget;
+    setFilters((prev) => ({ ...prev, [name]: value }));
+  };
+
   useEffect(() => {
     if (!editId) return;
     setFormOpen(true);
@@ -133,10 +149,40 @@ export default function Home() {
         </Typography>
 
         <Stack spacing="20px">
-          <Stack direction="row" justifyContent="flex-end">
-            <Button variant="contained" onClick={onFormOpen}>
-              Create
-            </Button>
+          <Stack direction="row" justifyContent="space-between">
+            <Stack gap="8px">
+              <Typography fontSize="16px" fontWeight={600} textAlign="left">
+                Filter
+              </Typography>
+              <Stack direction="row" gap="16px">
+                <TextField
+                  name="treatment"
+                  size="small"
+                  onChange={onFilterChange}
+                  value={filters?.treatment || ""}
+                  label="Treatment"
+                />
+                <Stack direction="row" gap="8px">
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => refetch()}>
+                    Filter
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => setFilters(undefined)}>
+                    Reset
+                  </Button>
+                </Stack>
+              </Stack>
+            </Stack>
+            <Box display="flex" justifyContent="flex-end" alignItems="center">
+              <Button variant="contained" onClick={onFormOpen}>
+                Create
+              </Button>
+            </Box>
           </Stack>
           <Paper sx={{ width: "100%" }}>
             <DataGrid

@@ -68,7 +68,7 @@ export default class PatientsRepository {
   }
 
   async getPatientList({ filters, orders, page, limit }: GetPatientListProps) {
-    const { filterQueries, orderQueries } = generateQueries({
+    const { filterQueries, orderQueries, havingQueries } = generateQueries({
       filters,
       orders,
     });
@@ -121,6 +121,7 @@ export default class PatientsRepository {
       )
       .where(...[filterQueries])
       .groupBy(patientsTable.id)
+      .having(havingQueries)
       .orderBy(orderQueries)
       .limit(limit)
       .offset(offset);

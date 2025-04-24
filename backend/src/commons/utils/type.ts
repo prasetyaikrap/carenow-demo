@@ -20,7 +20,10 @@ export type FilterOperators =
   | "notBetween"
   | "dateBetween"
   | "notDateBetween"
-  | "isNull";
+  | "isNull"
+
+  // Custom
+  | "havingArrayToStringContains";
 
 export type QueryFilter = {
   field: string;
